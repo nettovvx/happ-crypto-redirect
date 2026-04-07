@@ -46,9 +46,9 @@ npm start
 Проверка:
 
 ```bash
-curl -i http://localhost:3000/health
-curl -i http://localhost:3000/api/sub/CNrFDXcGYqfp_HwG
-curl -i "http://localhost:3000/miniapp/redirect.html?url=happ%3A%2F%2Fadd%2Fhttps%3A%2F%2Flink.nettovvx.me%2Fapi%2Fsub%2FCNrFDXcGYqfp_HwG&lang=ru"
+curl -i http://localhost:5500/health
+curl -i http://localhost:5500/api/sub/CNrFDXcGYqfp_HwG
+curl -i "http://localhost:5500/miniapp/redirect.html?url=happ%3A%2F%2Fadd%2Fhttps%3A%2F%2Flink.nettovvx.me%2Fapi%2Fsub%2FCNrFDXcGYqfp_HwG&lang=ru"
 ```
 
 ## Docker
@@ -59,6 +59,7 @@ docker compose up --build -d
 ```
 
 Сервис рассчитан на работу за внешним reverse proxy (например, существующим Caddy).
+По умолчанию наружный порт в compose: `5500` (можно переопределить через `HOST_PORT`).
 
 ## Переменные окружения
 
