@@ -46,6 +46,36 @@ function makeMiniappBridgeHtml(targetUrl) {
 </html>`;
 }
 
+function toHappAddUrl(url) {
+  if (typeof url !== 'string') return url;
+  if (url.startsWith('happ://add/')) return url;
+  return `happ://add/${url}`;
+}
+
+function toMiniappRedirectUrl(encryptedUrl) {
+  if (typeof encryptedUrl !== 'string') return encryptedUrl;
+
+  // If encryption service already produced a ready deep link (e.g. happ://crypt...),
+  // do not wrap it into happ://add/... because many clients treat that as invalid.
+  if (encryptedUrl.startsWith('happ://')) {
+    return encryptedUrl;
+  }
+
+  return toHappAddUrl(encryptedUrl);
+}
+
+function getSubRedirectLocation(encryptedUrl) {
+  if (typeof encryptedUrl !== 'string') return encryptedUrl;
+  if (encryptedUrl.startsWith('happ://add/')) return encryptedUrl;
+
+  // Some Happ clients reject direct happ://crypt* actions, but accept them via happ://add/.
+  if (encryptedUrl.startsWith('happ://crypt')) {
+    return toHappAddUrl(encryptedUrl);
+  }
+
+  return encryptedUrl;
+}
+
 async function getEncryptedUrlForToken(token, requestId) {
   const validToken = assertValidToken(token);
   const internalUrl = buildInternalSubscriptionUrl(validToken);
@@ -71,14 +101,14 @@ function getMiniappResult(encryptedUrl) {
       return {
         type: 'redirect',
         status: 307,
-        location: `happ://add/${encryptedUrl}`,
+        location: toMiniappRedirectUrl(encryptedUrl),
       };
     }
     case 'html_bridge': {
       return {
         type: 'html',
         status: 200,
-        body: makeMiniappBridgeHtml(`happ://add/${encryptedUrl}`),
+        body: makeMiniappBridgeHtml(toMiniappRedirectUrl(encryptedUrl)),
       };
     }
     default:
@@ -88,5 +118,6 @@ function getMiniappResult(encryptedUrl) {
 
 module.exports = {
   getEncryptedUrlForToken,
+  getSubRedirectLocation,
   getMiniappResult,
 };
