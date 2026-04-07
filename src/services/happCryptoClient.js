@@ -38,12 +38,16 @@ function isValidRedirectTarget(value) {
   return true;
 }
 
-async function encryptUrl(urlToEncrypt, requestId) {
+function isCrypt5DeepLink(value) {
+  return typeof value === 'string' && value.startsWith('happ://crypt5/');
+}
+
+async function requestEncryptedUrl(apiUrl, urlToEncrypt, requestId) {
   const controller = new AbortController();
   const timeoutRef = setTimeout(() => controller.abort(), config.requestTimeoutMs);
 
   try {
-    const response = await fetch(config.happCryptoApi, {
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -56,6 +60,7 @@ async function encryptUrl(urlToEncrypt, requestId) {
     if (!response.ok) {
       logger.warn('happ_crypto_non_200', {
         requestId,
+        apiUrl,
         status: response.status,
       });
       throw AppError.encryptionFailed();
@@ -76,7 +81,11 @@ async function encryptUrl(urlToEncrypt, requestId) {
     return encryptedUrl;
   } catch (err) {
     if (err && err.name === 'AbortError') {
-      logger.warn('happ_crypto_timeout', { requestId, timeoutMs: config.requestTimeoutMs });
+      logger.warn('happ_crypto_timeout', {
+        requestId,
+        apiUrl,
+        timeoutMs: config.requestTimeoutMs,
+      });
       throw AppError.encryptionFailed();
     }
 
@@ -86,12 +95,46 @@ async function encryptUrl(urlToEncrypt, requestId) {
 
     logger.error('happ_crypto_request_failed', {
       requestId,
+      apiUrl,
       errName: err && err.name,
     });
 
     throw AppError.encryptionFailed();
   } finally {
     clearTimeout(timeoutRef);
+  }
+}
+
+async function encryptUrl(urlToEncrypt, requestId) {
+  const primaryUrl = await requestEncryptedUrl(config.happCryptoApi, urlToEncrypt, requestId);
+
+  if (!config.preferLegacyDeeplink) {
+    return primaryUrl;
+  }
+
+  if (!isCrypt5DeepLink(primaryUrl)) {
+    return primaryUrl;
+  }
+
+  if (!config.happCryptoFallbackApi || config.happCryptoFallbackApi === config.happCryptoApi) {
+    return primaryUrl;
+  }
+
+  try {
+    const fallbackUrl = await requestEncryptedUrl(config.happCryptoFallbackApi, urlToEncrypt, requestId);
+    logger.info('happ_crypto_legacy_fallback_used', {
+      requestId,
+      fromApi: config.happCryptoApi,
+      toApi: config.happCryptoFallbackApi,
+    });
+    return fallbackUrl;
+  } catch {
+    logger.warn('happ_crypto_legacy_fallback_failed', {
+      requestId,
+      fromApi: config.happCryptoApi,
+      toApi: config.happCryptoFallbackApi,
+    });
+    return primaryUrl;
   }
 }
 

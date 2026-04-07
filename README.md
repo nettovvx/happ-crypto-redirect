@@ -32,8 +32,8 @@ Production-ready backend-сервис на Node.js/Express для безопас
 Управляется переменной `MINIAPP_RESULT_MODE`:
 
 - `direct` -> 307 redirect на encrypted URL
-- `happ_add` -> 307 redirect на `happ://add/<encrypted URL>`
-- `html_bridge` -> HTML-страница с JS redirect на `happ://add/<encrypted URL>`
+- `happ_add` -> 307 redirect на `happ://add/<encrypted URL>` (если encrypted URL уже начинается с `happ://`, отдается как есть)
+- `html_bridge` -> HTML-страница с JS redirect на итоговый deeplink (аналогично правилу выше)
 
 ## Запуск локально
 
@@ -68,6 +68,8 @@ docker compose up --build -d
 - `NODE_ENV`
 - `PORT`
 - `HAPP_CRYPTO_API`
+- `HAPP_CRYPTO_FALLBACK_API`
+- `PREFER_LEGACY_DEEPLINK`
 - `NEW_SUB_BASE_URL`
 - `REQUEST_TIMEOUT_MS`
 - `LOG_LEVEL`
@@ -81,3 +83,9 @@ docker compose up --build -d
 - полные чувствительные URL не логируются
 - логируются только технические метаданные (`requestId`, статус, latency, masked token)
 - `x-powered-by` отключен
+
+## Совместимость Deeplink
+
+Некоторые клиенты Happ могут не поддерживать action `crypt5` (`happ://crypt5/...`).
+Сервис сначала использует `HAPP_CRYPTO_API`, и если приходит `crypt5` при `PREFER_LEGACY_DEEPLINK=true`,
+пробует получить совместимый deeplink через `HAPP_CRYPTO_FALLBACK_API` (обычно `happ://crypt4/...`).

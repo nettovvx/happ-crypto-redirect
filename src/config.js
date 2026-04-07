@@ -68,6 +68,13 @@ const happCryptoApi = ensureValidUrl(
   'HAPP_CRYPTO_API'
 );
 
+const happCryptoFallbackApi = ensureValidUrl(
+  process.env.HAPP_CRYPTO_FALLBACK_API || 'https://crypto.happ.su/api.php',
+  'HAPP_CRYPTO_FALLBACK_API'
+);
+
+const preferLegacyDeeplink = parseBoolean(process.env.PREFER_LEGACY_DEEPLINK, true);
+
 const newSubBaseUrl = ensureTrailingSlash(
   ensureValidUrl(
     process.env.NEW_SUB_BASE_URL || 'https://happ-crypto.nettovvx.me/api/sub/',
@@ -79,6 +86,8 @@ module.exports = {
   nodeEnv,
   port,
   happCryptoApi,
+  happCryptoFallbackApi,
+  preferLegacyDeeplink,
   newSubBaseUrl,
   requestTimeoutMs,
   logLevel,
