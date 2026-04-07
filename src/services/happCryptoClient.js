@@ -8,12 +8,16 @@ function extractEncryptedUrl(payload) {
 
   const candidates = [
     payload.url,
+    payload.encrypted_link,
     payload.encrypted_url,
     payload.encryptedUrl,
+    payload.encryptedLink,
     payload.result,
     payload.data && payload.data.url,
+    payload.data && payload.data.encrypted_link,
     payload.data && payload.data.encrypted_url,
     payload.data && payload.data.encryptedUrl,
+    payload.data && payload.data.encryptedLink,
   ];
 
   for (const value of candidates) {

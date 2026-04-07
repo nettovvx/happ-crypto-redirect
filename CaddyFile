@@ -1,0 +1,166 @@
+https://rw.koltsovv.me {
+    log {
+        output stdout
+        format console
+    }
+
+    reverse_proxy * http://remnawave:3000
+}
+
+https://happ-crypto.nettovvx.me {
+    log {
+        output stdout
+        format console
+    }
+
+    encode zstd gzip
+
+    @api path /api/sub/*
+    handle @api {
+        header {
+            Cache-Control "no-store, private, max-age=0"
+            Pragma "no-cache"
+            Referrer-Policy "no-referrer"
+            X-Robots-Tag "noindex, nofollow, noarchive"
+        }
+        reverse_proxy remnawave:3000
+    }
+}
+
+
+https://link.nettovvx.me {
+    log {
+        output stdout
+        format console
+    }
+
+    handle /api/sub/* {
+        header {
+            Cache-Control "no-store, private, max-age=0"
+            Pragma "no-cache"
+            Referrer-Policy "no-referrer"
+            X-Robots-Tag "noindex, nofollow, noarchive"
+        }
+        reverse_proxy happ-crypto-redirect-app:5500
+    }
+
+    @health path /health /healthz
+    handle @health {
+        rewrite * /health
+        reverse_proxy happ-crypto-redirect-app:5500
+    }
+
+    handle {
+        root * /srv/site
+        encode gzip zstd
+        try_files {path} {path}/ /index.html
+        file_server
+    }
+}
+
+https://web.link.nettovvx.me {
+    redir https://lk-link.nettovvx.me{uri} permanent
+}
+
+https://hooks.koltsovv.me {
+    log {
+        output stdout
+        format console
+    }
+
+    encode gzip zstd
+
+    handle /yookassa-webhook {
+        reverse_proxy remnawave_bot:8080 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            transport http {
+                read_buffer 0
+            }
+        }
+    }
+
+    handle /app-config.json {
+        header Access-Control-Allow-Origin "*"
+        reverse_proxy remnawave_bot:8080 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            transport http {
+                read_buffer 0
+            }
+        }
+    }
+
+    handle {
+        reverse_proxy remnawave_bot:8080 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            transport http {
+                read_buffer 0
+            }
+        }
+    }
+}
+
+https://lk-link.nettovvx.me {
+    log {
+        output stdout
+        format console
+    }
+
+    root * /srv/cabinet
+    encode gzip
+
+    handle /miniapp/redirect.html {
+        reverse_proxy happ-crypto-redirect-app:5500
+    }
+
+    handle /api/* {
+        uri strip_prefix /api
+        reverse_proxy remnawave_bot:8080
+    }
+    @websockets {
+        header_regexp Connection *Upgrade*
+        header        Upgrade websocket
+    }
+
+    handle /cabinet/ws {
+        uri strip_prefix /api
+        reverse_proxy remnawave_bot:8080 {
+            transport http {
+                read_timeout 0
+                write_timeout 0
+            }
+        }
+    }
+
+    handle {
+        try_files {path} /index.html
+        file_server
+    }
+}
+
+https://rw-admin.koltsovv.me {
+    handle /api/* {
+        reverse_proxy remnawave-web-backend:8081
+    }
+
+    handle /ws/* {
+        reverse_proxy remnawave-web-backend:8081
+    }
+
+    handle {
+        reverse_proxy remnawave-web-frontend:80
+    }
+}
+
+https://acc.nettovvx.me {
+    handle {
+        reverse_proxy http://10.25.11.5:8080
+    }
+}
+
+:443 {
+    tls internal
+    respond 204
+}
