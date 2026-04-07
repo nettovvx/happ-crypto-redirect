@@ -64,18 +64,6 @@ function toMiniappRedirectUrl(encryptedUrl) {
   return toHappAddUrl(encryptedUrl);
 }
 
-function getSubRedirectLocation(encryptedUrl) {
-  if (typeof encryptedUrl !== 'string') return encryptedUrl;
-  if (encryptedUrl.startsWith('happ://add/')) return encryptedUrl;
-
-  // Some Happ clients reject direct happ://crypt* actions, but accept them via happ://add/.
-  if (encryptedUrl.startsWith('happ://crypt')) {
-    return toHappAddUrl(encryptedUrl);
-  }
-
-  return encryptedUrl;
-}
-
 async function getEncryptedUrlForToken(token, requestId) {
   const validToken = assertValidToken(token);
   const internalUrl = buildInternalSubscriptionUrl(validToken);
@@ -118,6 +106,5 @@ function getMiniappResult(encryptedUrl) {
 
 module.exports = {
   getEncryptedUrlForToken,
-  getSubRedirectLocation,
   getMiniappResult,
 };
